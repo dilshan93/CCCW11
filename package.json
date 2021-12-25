@@ -1,0 +1,29 @@
+{
+  "name": "cccw1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sachindilan/CCCW1.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sachindilan/CCCW1/issues"
+  },
+  "homepage": "https://github.com/sachindilan/CCCW1#readme",
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "typescript": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.88",
+    "@types/lodash": "^4.14.178",
+    "@types/node": "^17.0.4",
+    "@vercel/ncc": "^0.33.1"
+  }
+}
