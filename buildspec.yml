@@ -10,10 +10,8 @@ phases:
       - echo Build completed on `date`
       - mvn package
       - echo "Zipping deployment package..."
-      - cp target/HelloWorld-1.0.jar .
-      - zip deployment_package.zip HelloWorld-1.0.jar
   post_build:
     commands:
       - echo "Updating lambda Function..."
-      - aws lambda update-function-code --function-name lamdafunction-java --zip-file fileb://deployment_package.zip
+      - aws lambda update-function-code --function-name lamdafunction-java --zip-file fileb://./target/HelloWorld-1.0.jar
       - echo "DONE!!"
