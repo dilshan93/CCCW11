@@ -5,11 +5,11 @@ Resources:
     Properties:
       Code:
         ZipFile: |
-          System.out.print("Hello world");
+          console.log('Initial cloudformation template');
       FunctionName:
         Ref: LambdaFuncName
       Handler: index.handler
-      Runtime: java11
+      Runtime: nodejs14.x
       Role: !GetAtt IAMRole.Arn
     DependsOn:
       - DynamoDBTable
@@ -173,7 +173,7 @@ Resources:
         Type: GITHUB
         Auth:
           Type: OAUTH
-          Resource: token
+          Resource: TOKEN
       SourceVersion: master   # Branch name
       Triggers:
         Webhook: true
