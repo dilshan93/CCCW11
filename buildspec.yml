@@ -9,7 +9,6 @@ phases:
     commands:
       - echo Build completed on `date`
       - mvn package
-      - echo "Zipping deployment package..."
   post_build:
     commands:
       - echo "Updating lambda Function..."
