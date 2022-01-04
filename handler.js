@@ -21,7 +21,6 @@ function getCarOptions(event) {
 	const itemId = event.pathParameters.itemId;
 	return databaseManager.getItem(itemId).then(response => {
 		console.log(response);
-		console.log(response);
 		return sendResponse(200, JSON.stringify(response.options));
 	});
 }
