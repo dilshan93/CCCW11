@@ -25,6 +25,7 @@ function getCarOptions(event) {
 		console.log(response);
 		console.log(response);
 		console.log(response);
+		console.log(response);
 		return sendResponse(200, JSON.stringify(response.options));
 	});
 }
