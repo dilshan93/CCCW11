@@ -2,6 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
 
 Parameters:
+
   carTableName:
     Type: String
     Default: car
@@ -168,6 +169,19 @@ Resources:
                   - 'ec2:DescribeInstances'
                   - 'ec2:AttachNetworkInterface'
                 Resource: '*'
+              - Effect: Allow
+                Action:
+                  - "lambda:InvokeAsync"
+                  - "lambda:InvokeFunction"
+                  - "lambda:InvokeFunction"
+                  - "lambda:CreateFunction"
+                  - "lambda:DeleteFunction"
+                  - "lambda:GetFunction"
+                  - "lambda:ListFunctions"
+                  - "lambda:UpdateFunctionCode"
+                  - "lambda:GetFunctionConfiguration"
+                  - "lambda:UpdateFunctionConfiguration"
+                Resource: '*'
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -175,8 +189,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          -
-            Effect: "Allow"
+          - Effect: "Allow"
             Principal:
               Service:
                 - "codebuild.amazonaws.com"
@@ -184,17 +197,25 @@ Resources:
               - "sts:AssumeRole"
       Path: /service-role/
       Policies:
-        -
-          PolicyName: "CodeBuildAccessPolicies"
+        - PolicyName: "CodeBuildAccessPolicies"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              -
-                Effect: "Allow"
+              - Effect: "Allow"
                 Action:
                   - "logs:CreateLogGroup"
                   - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
+                  - "lambda:InvokeAsync"
+                  - "lambda:InvokeFunction"
+                  - "lambda:InvokeFunction"
+                  - "lambda:CreateFunction"
+                  - "lambda:DeleteFunction"
+                  - "lambda:GetFunction"
+                  - "lambda:ListFunctions"
+                  - "lambda:UpdateFunctionCode"
+                  - "lambda:GetFunctionConfiguration"
+                  - "lambda:UpdateFunctionConfiguration"
                 Resource:
                   - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*
   CodeBuildProject:
@@ -213,7 +234,7 @@ Resources:
         Type: GITHUB
         Auth:
           Type: OAUTH
-          Resource: gittoken123456789  # CHANGE HERE --> Add GIT Auth key
+          Resource: git token  # CHANGE HERE --> Add GIT Auth key
       SourceVersion: master   # CHANGE HERE --> Add Branch Name
       Triggers:
         Webhook: true
@@ -226,6 +247,7 @@ Resources:
               ExcludeMatchedPattern: false
       TimeoutInMinutes: 10
 Outputs:
+
   Region:
     Description: "Region"
     Value: !Ref AWS::Region
