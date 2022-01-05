@@ -2,10 +2,55 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
 
 Parameters:
+  InputApplicationTagName:
+    Default: project1
+    Type: String
+  InputUserPoolName:
+    Default: api-project1
+    Type: String
+  InputRefreshTokenValidity:
+    Default: 30
+    Type: String
+  InputClientName:
+    Default: project1_Client
+    Type: String
 
+  LambdaFuncNamedev:
+    Type: String
+    Default: Lambdavehiclefunction-dev
+  LambdaFuncNamestag:
+    Type: String
+    Default: Lambdavehiclefunction-stag
   LambdaFuncName:
     Type: String
     Default: Lambdavehiclefunction
+
+  carTableName:
+    Type: String
+    Default: car
+    Description: (Required) The name of the new DynamoDB table you want to create and save to. Minimum 3 characters
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z]+$
+    ConstraintDescription: Required parameter. Must be characters only. No numbers allowed.
+
+  carModelTableNamedev:
+      Type: String
+      Default: carmodeldev
+      Description: (Required) The name of the new DynamoDB table you want to create and save to. Minimum 3 characters
+      MinLength: 3
+      MaxLength: 50
+      AllowedPattern: ^[A-Za-z]+$
+      ConstraintDescription: Required parameter. Must be characters only. No numbers allowed.
+
+  carModelTableNamestag:
+      Type: String
+      Default: carmodelstag
+      Description: (Required) The name of the new DynamoDB table you want to create and save to. Minimum 3 characters
+      MinLength: 3
+      MaxLength: 50
+      AllowedPattern: ^[A-Za-z]+$
+      ConstraintDescription: Required parameter. Must be characters only. No numbers allowed.
 
   carModelTableName:
       Type: String
@@ -23,11 +68,57 @@ Resources:
     Properties:
       StageName: dev
       Auth:
-        DefaultAuthorizer: MyLambdaTokenAuthorizer
-        Authorizers: 
-          MyLambdaTokenAuthorizer:
-            FunctionArn: !GetAtt MyAuthFunction.Arn
+        DefaultAuthorizer: MyCognitoAuthorizer
+        Authorizers:
+          MyCognitoAuthorizer:
+            UserPoolArn: !GetAtt UserPoolResource.Arn
     
+
+  ModelSearchFunctiondev:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName:
+        Ref: LambdaFuncNamedev
+      Handler: handler.modelSearchService
+      Runtime: nodejs14.x
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref carModelTableNamedev
+      Environment:
+        Variables:
+          TABLE_NAME1: !Ref carModelTableNamedev
+      Events:
+        SearchModelAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /get-car-model-dev/{modelName}
+            Method: GET
+      Timeout: 100
+
+  ModelSearchFunctionstag:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName:
+        Ref: LambdaFuncNamestag
+      Handler: handler.modelSearchService
+      Runtime: nodejs14.x
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref carModelTableNamestag
+      Environment:
+        Variables:
+          TABLE_NAME1: !Ref carModelTableNamestag
+      Events:
+        SearchModelAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /get-car-model-stag/{modelName}
+            Method: GET
+      Timeout: 100
 
   ModelSearchFunction:
     Type: 'AWS::Serverless::Function'
@@ -36,7 +127,6 @@ Resources:
         Ref: LambdaFuncName
       Handler: handler.modelSearchService
       Runtime: nodejs14.x
-      Role: !GetAtt IAMRole.Arn
       CodeUri: .
       Policies:
         - DynamoDBCrudPolicy:
@@ -53,6 +143,42 @@ Resources:
             Method: GET
       Timeout: 100
 
+  CarDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref carTableName
+      AttributeDefinitions:
+        - AttributeName: itemId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: itemId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  CarModelDynamoDBTabledev:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref carModelTableNamedev
+      AttributeDefinitions:
+        - AttributeName: modelId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: modelId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  CarModelDynamoDBTablestag:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref carModelTableNamestag
+      AttributeDefinitions:
+        - AttributeName: modelId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: modelId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  
   CarModelDynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -71,6 +197,7 @@ Resources:
       CodeUri: ./authorizer
       Handler: handler.authorizer
       Runtime: nodejs14.x
+  
   IAMRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -116,19 +243,7 @@ Resources:
                   - 'ec2:DescribeInstances'
                   - 'ec2:AttachNetworkInterface'
                 Resource: '*'
-              - Effect: Allow
-                Action:
-                  - "lambda:InvokeAsync"
-                  - "lambda:InvokeFunction"
-                  - "lambda:InvokeFunction"
-                  - "lambda:CreateFunction"
-                  - "lambda:DeleteFunction"
-                  - "lambda:GetFunction"
-                  - "lambda:ListFunctions"
-                  - "lambda:UpdateFunctionCode"
-                  - "lambda:GetFunctionConfiguration"
-                  - "lambda:UpdateFunctionConfiguration"
-                Resource: '*'
+
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -136,30 +251,29 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Effect: "Allow"
+          -
+            Effect: "Allow"
             Principal:
               Service:
                 - "codebuild.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-#      Path: /service-role/
+      Path: /service-role/
       Policies:
-        - PolicyName: "CodeBuildAccessPolicies"
+        -
+          PolicyName: "CodeBuildAccessPolicies"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              - Effect: "Allow"
+              -
+                Effect: "Allow"
                 Action:
                   - "logs:CreateLogGroup"
                   - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
-                Resource: '*'
-              - Effect: Allow
-                Action:
-                  - 'lambda:InvokeFunction'
-                  - 'lambda:ListFunctions'
-                  - 'lambda:UpdateFunctionCode'
-                Resource: '*'
+                Resource:
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*
+
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -172,12 +286,12 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:5.0
       Source:
-        Location: https://github.com/sachindilan/CCCW1.git  # CHANGE HERE --> Add GIT URL
+        Location: https://github.com/sachindilan/CCCW1.git
         Type: GITHUB
         Auth:
           Type: OAUTH
-          Resource: 123  # CHANGE HERE --> Add GIT Auth key
-      SourceVersion: master   # CHANGE HERE --> Add Branch Name
+          Resource: token
+      SourceVersion: master   # Branch name
       Triggers:
         Webhook: true
         FilterGroups:
@@ -185,10 +299,94 @@ Resources:
               Pattern: PUSH
               ExcludeMatchedPattern: false
             - Type: HEAD_REF
-              Pattern: refs/heads/master  # CHANGE HERE --> Add Branch Name
+              Pattern: refs/heads/master # 'master' is Branch name
               ExcludeMatchedPattern: false
       TimeoutInMinutes: 10
+
+  UserPoolResource:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName:
+        Ref: InputUserPoolName
+      UserPoolTags:
+        application:
+          Ref: InputApplicationTagName
+
+  UserPoolClientResource:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      AllowedOAuthFlows:
+        - client_credentials
+      GenerateSecret: 'true'
+      ClientName:
+        Ref: InputClientName
+      PreventUserExistenceErrors: ENABLED
+      RefreshTokenValidity:
+        Ref: InputRefreshTokenValidity
+      SupportedIdentityProviders:
+        - COGNITO
+      AllowedOAuthScopes:
+        - Fn::Join:
+            - "/"
+            - - Ref: InputUserPoolName
+              - read_operation
+        - Fn::Join:
+            - "/"
+            - - Ref: InputUserPoolName
+              - create_operation
+        - Fn::Join:
+            - "/"
+            - - Ref: InputUserPoolName
+              - delete_operation
+      UserPoolId:
+        Ref: UserPoolResource
+    DependsOn:
+      - UserPoolResourceServerResource
+
+  UserPoolResourceServerResource:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      UserPoolId:
+        Ref: UserPoolResource
+      Identifier:
+        Ref: InputUserPoolName
+      Name:
+        Ref: InputUserPoolName
+      Scopes:
+        - ScopeName: read_operation
+          ScopeDescription: read operation
+        - ScopeName: create_operation
+          ScopeDescription: create operation
+        - ScopeName: delete_operation
+          ScopeDescription: delete operation
+
+  UserPoolDomainResource:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain:
+        Ref: InputUserPoolName
+      UserPoolId:
+        Ref: UserPoolResource
+
 Outputs:
+  UserPoolARN:
+    Value:
+      Fn::GetAtt:
+        - UserPoolResource
+        - Arn
+  UserPoolProviderURL:
+    Value:
+      Fn::GetAtt:
+        - UserPoolResource
+        - ProviderURL
+  UserPoolProviderName:
+    Value:
+      Fn::GetAtt:
+        - UserPoolResource
+        - ProviderName
+  UserPoolID:
+    Value:
+      Ref: UserPoolResource
 
   Region:
     Description: "Region"

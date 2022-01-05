@@ -1,9 +1,16 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Parameters:
-  LambdaFuncName:
+  carTableName:
     Type: String
-    Default: Lambdavehiclefunction
+    Default: car
+    Description: (Required) The name of the new DynamoDB table you want to create
+      and save to. Minimum 3 characters
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z]+$
+    ConstraintDescription: Required parameter. Must be characters only. No numbers
+      allowed.
   carModelTableName:
     Type: String
     Default: carmodel
@@ -30,14 +37,8 @@ Resources:
   ModelSearchFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName:
-        Ref: LambdaFuncName
       Handler: handler.modelSearchService
       Runtime: nodejs14.x
-      Role:
-        Fn::GetAtt:
-        - IAMRole
-        - Arn
       CodeUri: ModelSearchFunction
       Policies:
       - DynamoDBCrudPolicy:
@@ -56,6 +57,64 @@ Resources:
             Path: /get-car-model/{modelName}
             Method: GET
       Timeout: 100
+  PriceRetrievalFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.priceRetrievalService
+      Runtime: nodejs14.x
+      CodeUri: PriceRetrievalFunction
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: carTableName
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: carTableName
+      Events:
+        SearchModelAPI:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: MyApi
+            Path: /get-car-price/{itemId}
+            Method: GET
+      Timeout: 100
+  OptionsRetrievalFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.optionsRetrievalService
+      Runtime: nodejs14.x
+      CodeUri: OptionsRetrievalFunction
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: carTableName
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: carTableName
+      Events:
+        SearchModelAPI:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: MyApi
+            Path: /get-car-options/{itemId}
+            Method: GET
+      Timeout: 100
+  CarDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Ref: carTableName
+      AttributeDefinitions:
+      - AttributeName: itemId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: itemId
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
   CarModelDynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -74,126 +133,6 @@ Resources:
       CodeUri: MyAuthFunction
       Handler: handler.authorizer
       Runtime: nodejs14.x
-  IAMRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - lambda.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      Path: /
-      Policies:
-      - PolicyName: Policy_api-lambda-db
-        PolicyDocument:
-          Version: 2012-10-17
-          Statement:
-          - Effect: Allow
-            Action:
-            - dynamodb:BatchGetItem
-            - dynamodb:BatchWriteItem
-            - dynamodb:TagResource
-            - dynamodb:UntagResource
-            - dynamodb:PutItem
-            - dynamodb:DeleteItem
-            - dynamodb:GetItem
-            - dynamodb:Scan
-            - dynamodb:Query
-            - dynamodb:UpdateItem
-            Resource: '*'
-          - Effect: Allow
-            Action:
-            - logs:CreateLogStream
-            - logs:CreateLogGroup
-            - logs:PutLogEvents
-            Resource: '*'
-          - Effect: Allow
-            Action:
-            - ec2:DescribeNetworkInterfaces
-            - ec2:CreateNetworkInterface
-            - ec2:DeleteNetworkInterface
-            - ec2:DescribeInstances
-            - ec2:AttachNetworkInterface
-            Resource: '*'
-          - Effect: Allow
-            Action:
-            - lambda:InvokeAsync
-            - lambda:InvokeFunction
-            - lambda:InvokeFunction
-            - lambda:CreateFunction
-            - lambda:DeleteFunction
-            - lambda:GetFunction
-            - lambda:ListFunctions
-            - lambda:UpdateFunctionCode
-            - lambda:GetFunctionConfiguration
-            - lambda:UpdateFunctionConfiguration
-            Resource: '*'
-  CodeBuildServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName:
-        Fn::Sub: CodeBuildRole-${AWS::StackName}
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - codebuild.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      Policies:
-      - PolicyName: CodeBuildAccessPolicies
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - logs:CreateLogGroup
-            - logs:CreateLogStream
-            - logs:PutLogEvents
-            Resource: '*'
-          - Effect: Allow
-            Action:
-            - lambda:InvokeFunction
-            - lambda:ListFunctions
-            - lambda:UpdateFunctionCode
-            Resource: '*'
-  CodeBuildProject:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Name: Sample-CodeBuildProject
-      ServiceRole:
-        Fn::GetAtt:
-        - CodeBuildServiceRole
-        - Arn
-      Artifacts:
-        Type: no_artifacts
-      Environment:
-        Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:5.0
-      Source:
-        Location: https://github.com/sachindilan/CCCW1.git
-        Type: GITHUB
-        Auth:
-          Type: OAUTH
-          Resource: 123
-      SourceVersion: master
-      Triggers:
-        Webhook: true
-        FilterGroups:
-        - - Type: EVENT
-            Pattern: PUSH
-            ExcludeMatchedPattern: false
-          - Type: HEAD_REF
-            Pattern: refs/heads/master
-            ExcludeMatchedPattern: false
-      TimeoutInMinutes: 10
 Outputs:
   Region:
     Description: Region
