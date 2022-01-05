@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "config": {
-    "stackName": "tharukastack",
-    "bucketName": "tharuka"
+    "stackName": "cloudformationstack",
+    "bucketName": "ccwbucketiit"
   },
   "scripts": {
     "deploy": "sam build --region us-east-2 && sam package --template-file template.yml --s3-bucket ccwbucketiit --output-template-file packaged.yaml && sam deploy --region us-east-2 --template-file packaged.yaml --stack-name cloudformationstack --capabilities CAPABILITY_NAMED_IAM && aws cloudformation describe-stacks --stack-name cloudformationstack --region us-east-2 --query 'Stacks[].Outputs'",
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mavi888/sam-test-basic-project.git"
+    "url": "git+https://github.com/sachindilan/CCCW1.git"
   },
   "keywords": [],
   "author": "",
