@@ -7,7 +7,7 @@ runtime = "nodejs14.x"
 architecture = "x86_64"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["ModelSearchFunction", "PriceRetrievalFunction", "OptionsRetrievalFunction"]
+functions = ["ModelSearchFunction"]
 
 [function_build_definitions.125db59a-bd47-4d36-85b0-283e9c77810b]
 codeuri = "/home/sachin/Documents/IIT/Cloud Computing/CW1/CW1/CCCW1/authorizer"

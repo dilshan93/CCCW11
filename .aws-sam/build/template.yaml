@@ -1,16 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Parameters:
-  carTableName:
+  LambdaFuncName:
     Type: String
-    Default: car
-    Description: (Required) The name of the new DynamoDB table you want to create
-      and save to. Minimum 3 characters
-    MinLength: 3
-    MaxLength: 50
-    AllowedPattern: ^[A-Za-z]+$
-    ConstraintDescription: Required parameter. Must be characters only. No numbers
-      allowed.
+    Default: Lambdavehiclefunction
   carModelTableName:
     Type: String
     Default: carmodel
@@ -37,8 +30,14 @@ Resources:
   ModelSearchFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName:
+        Ref: LambdaFuncName
       Handler: handler.modelSearchService
       Runtime: nodejs14.x
+      Role:
+        Fn::GetAtt:
+        - IAMRole
+        - Arn
       CodeUri: ModelSearchFunction
       Policies:
       - DynamoDBCrudPolicy:
@@ -57,64 +56,6 @@ Resources:
             Path: /get-car-model/{modelName}
             Method: GET
       Timeout: 100
-  PriceRetrievalFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: handler.priceRetrievalService
-      Runtime: nodejs14.x
-      CodeUri: PriceRetrievalFunction
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName:
-            Ref: carTableName
-      Environment:
-        Variables:
-          TABLE_NAME:
-            Ref: carTableName
-      Events:
-        SearchModelAPI:
-          Type: Api
-          Properties:
-            RestApiId:
-              Ref: MyApi
-            Path: /get-car-price/{itemId}
-            Method: GET
-      Timeout: 100
-  OptionsRetrievalFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: handler.optionsRetrievalService
-      Runtime: nodejs14.x
-      CodeUri: OptionsRetrievalFunction
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName:
-            Ref: carTableName
-      Environment:
-        Variables:
-          TABLE_NAME:
-            Ref: carTableName
-      Events:
-        SearchModelAPI:
-          Type: Api
-          Properties:
-            RestApiId:
-              Ref: MyApi
-            Path: /get-car-options/{itemId}
-            Method: GET
-      Timeout: 100
-  CarDynamoDBTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName:
-        Ref: carTableName
-      AttributeDefinitions:
-      - AttributeName: itemId
-        AttributeType: S
-      KeySchema:
-      - AttributeName: itemId
-        KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
   CarModelDynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -247,7 +188,7 @@ Resources:
         Type: GITHUB
         Auth:
           Type: OAUTH
-          Resource: git token
+          Resource: b04776caf65d2cb55a24365b07a6e0260f514d37
       SourceVersion: master
       Triggers:
         Webhook: true
