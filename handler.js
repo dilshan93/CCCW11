@@ -5,28 +5,6 @@ const uuidv1 = require('uuid/v1');
 
 exports.modelSearchService = async (event) => {
 	return getCarModel(event);
-  }
-
-
-exports.optionsRetrievalService = async function(event){
-	return getCarOptions(event);
-}
-
-
-function getCarOptions(event) {
-	const itemId = event.pathParameters.itemId;
-	return databaseManager.getItem(itemId).then(response => {
-		console.log(response);
-		return sendResponse(200, JSON.stringify(response.options));
-	});
-}
-
-function getCarPrice(event) {
-	const itemId = event.pathParameters.itemId;
-	return databaseManager.getItem(itemId).then(response => {
-		console.log(response);
-		return sendResponse(200, JSON.stringify(response.price));
-	});
 }
 
 function getCarModel(event) {

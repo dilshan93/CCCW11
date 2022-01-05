@@ -22,16 +22,6 @@ Parameters:
   LambdaFuncName:
     Type: String
     Default: Lambdavehiclefunction
-  carTableName:
-    Type: String
-    Default: car
-    Description: (Required) The name of the new DynamoDB table you want to create
-      and save to. Minimum 3 characters
-    MinLength: 3
-    MaxLength: 50
-    AllowedPattern: ^[A-Za-z]+$
-    ConstraintDescription: Required parameter. Must be characters only. No numbers
-      allowed.
   carModelTableNamedev:
     Type: String
     Default: carmodeldev
@@ -82,7 +72,7 @@ Resources:
         Ref: LambdaFuncNamedev
       Handler: handler.modelSearchService
       Runtime: nodejs14.x
-      CodeUri: s3://ccwbucketiit/c313f61dd231ad209ac3ddbb5cc57ad8
+      CodeUri: s3://ccwbucketiit/846fa684fb0aed7bedb088e57ec17806
       Policies:
       - DynamoDBCrudPolicy:
           TableName:
@@ -107,7 +97,7 @@ Resources:
         Ref: LambdaFuncNamestag
       Handler: handler.modelSearchService
       Runtime: nodejs14.x
-      CodeUri: s3://ccwbucketiit/c313f61dd231ad209ac3ddbb5cc57ad8
+      CodeUri: s3://ccwbucketiit/846fa684fb0aed7bedb088e57ec17806
       Policies:
       - DynamoDBCrudPolicy:
           TableName:
@@ -132,7 +122,7 @@ Resources:
         Ref: LambdaFuncName
       Handler: handler.modelSearchService
       Runtime: nodejs14.x
-      CodeUri: s3://ccwbucketiit/c313f61dd231ad209ac3ddbb5cc57ad8
+      CodeUri: s3://ccwbucketiit/846fa684fb0aed7bedb088e57ec17806
       Policies:
       - DynamoDBCrudPolicy:
           TableName:
@@ -150,18 +140,6 @@ Resources:
             Path: /get-car-model/{modelName}
             Method: GET
       Timeout: 100
-  CarDynamoDBTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName:
-        Ref: carTableName
-      AttributeDefinitions:
-      - AttributeName: itemId
-        AttributeType: S
-      KeySchema:
-      - AttributeName: itemId
-        KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
   CarModelDynamoDBTabledev:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -276,10 +254,72 @@ Resources:
             - logs:PutLogEvents
             Resource:
             - Fn::Sub: arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*
+  CodeBuildProjectdev:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: CodeBuildProjectdev
+      ServiceRole:
+        Fn::GetAtt:
+        - CodeBuildServiceRole
+        - Arn
+      Artifacts:
+        Type: no_artifacts
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+      Source:
+        Location: https://github.com/sachindilan/CCCW1.git
+        Type: GITHUB
+        Auth:
+          Type: OAUTH
+          Resource: token
+      SourceVersion: dev
+      Triggers:
+        Webhook: true
+        FilterGroups:
+        - - Type: EVENT
+            Pattern: PUSH
+            ExcludeMatchedPattern: false
+          - Type: HEAD_REF
+            Pattern: refs/heads/dev
+            ExcludeMatchedPattern: false
+      TimeoutInMinutes: 10
+  CodeBuildProjectstag:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: CodeBuildProjectstag
+      ServiceRole:
+        Fn::GetAtt:
+        - CodeBuildServiceRole
+        - Arn
+      Artifacts:
+        Type: no_artifacts
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+      Source:
+        Location: https://github.com/sachindilan/CCCW1.git
+        Type: GITHUB
+        Auth:
+          Type: OAUTH
+          Resource: token
+      SourceVersion: stag
+      Triggers:
+        Webhook: true
+        FilterGroups:
+        - - Type: EVENT
+            Pattern: PUSH
+            ExcludeMatchedPattern: false
+          - Type: HEAD_REF
+            Pattern: refs/heads/stag
+            ExcludeMatchedPattern: false
+      TimeoutInMinutes: 10
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: Sample-CodeBuildProject
+      Name: CodeBuildProject
       ServiceRole:
         Fn::GetAtt:
         - CodeBuildServiceRole

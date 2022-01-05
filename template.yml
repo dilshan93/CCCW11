@@ -25,15 +25,6 @@ Parameters:
     Type: String
     Default: Lambdavehiclefunction
 
-  carTableName:
-    Type: String
-    Default: car
-    Description: (Required) The name of the new DynamoDB table you want to create and save to. Minimum 3 characters
-    MinLength: 3
-    MaxLength: 50
-    AllowedPattern: ^[A-Za-z]+$
-    ConstraintDescription: Required parameter. Must be characters only. No numbers allowed.
-
   carModelTableNamedev:
       Type: String
       Default: carmodeldev
@@ -142,18 +133,6 @@ Resources:
             Path: /get-car-model/{modelName}
             Method: GET
       Timeout: 100
-
-  CarDynamoDBTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Ref carTableName
-      AttributeDefinitions:
-        - AttributeName: itemId
-          AttributeType: S
-      KeySchema:
-        - AttributeName: itemId
-          KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
 
   CarModelDynamoDBTabledev:
     Type: AWS::DynamoDB::Table
@@ -274,10 +253,68 @@ Resources:
                 Resource:
                   - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*
 
+  CodeBuildProjectdev:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: CodeBuildProjectdev
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: no_artifacts
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+      Source:
+        Location: https://github.com/sachindilan/CCCW1.git
+        Type: GITHUB
+        Auth:
+          Type: OAUTH
+          Resource: token
+      SourceVersion: dev   # Branch name
+      Triggers:
+        Webhook: true
+        FilterGroups:
+          - - Type: EVENT
+              Pattern: PUSH
+              ExcludeMatchedPattern: false
+            - Type: HEAD_REF
+              Pattern: refs/heads/dev # Branch name
+              ExcludeMatchedPattern: false
+      TimeoutInMinutes: 10
+
+  CodeBuildProjectstag:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: CodeBuildProjectstag
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: no_artifacts
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+      Source:
+        Location: https://github.com/sachindilan/CCCW1.git
+        Type: GITHUB
+        Auth:
+          Type: OAUTH
+          Resource: token
+      SourceVersion: stag   # Branch name
+      Triggers:
+        Webhook: true
+        FilterGroups:
+          - - Type: EVENT
+              Pattern: PUSH
+              ExcludeMatchedPattern: false
+            - Type: HEAD_REF
+              Pattern: refs/heads/stag #  Branch name
+              ExcludeMatchedPattern: false
+      TimeoutInMinutes: 10
+
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: Sample-CodeBuildProject
+      Name: CodeBuildProject
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Artifacts:
         Type: no_artifacts
@@ -299,7 +336,7 @@ Resources:
               Pattern: PUSH
               ExcludeMatchedPattern: false
             - Type: HEAD_REF
-              Pattern: refs/heads/master # 'master' is Branch name
+              Pattern: refs/heads/master # Branch name
               ExcludeMatchedPattern: false
       TimeoutInMinutes: 10
 
