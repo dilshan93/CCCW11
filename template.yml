@@ -142,7 +142,7 @@ Resources:
                 - "codebuild.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-      Path: /service-role/
+#      Path: /service-role/
       Policies:
         - PolicyName: "CodeBuildAccessPolicies"
           PolicyDocument:
@@ -153,18 +153,13 @@ Resources:
                   - "logs:CreateLogGroup"
                   - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
-                  - "lambda:InvokeAsync"
-                  - "lambda:InvokeFunction"
-                  - "lambda:InvokeFunction"
-                  - "lambda:CreateFunction"
-                  - "lambda:DeleteFunction"
-                  - "lambda:GetFunction"
-                  - "lambda:ListFunctions"
-                  - "lambda:UpdateFunctionCode"
-                  - "lambda:GetFunctionConfiguration"
-                  - "lambda:UpdateFunctionConfiguration"
-                Resource:
-                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'lambda:InvokeFunction'
+                  - 'lambda:ListFunctions'
+                  - 'lambda:UpdateFunctionCode'
+                Resource: '*'
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -181,7 +176,7 @@ Resources:
         Type: GITHUB
         Auth:
           Type: OAUTH
-          Resource: token  # CHANGE HERE --> Add GIT Auth key
+          Resource: 123  # CHANGE HERE --> Add GIT Auth key
       SourceVersion: master   # CHANGE HERE --> Add Branch Name
       Triggers:
         Webhook: true

@@ -146,7 +146,6 @@ Resources:
             - codebuild.amazonaws.com
           Action:
           - sts:AssumeRole
-      Path: /service-role/
       Policies:
       - PolicyName: CodeBuildAccessPolicies
         PolicyDocument:
@@ -157,18 +156,13 @@ Resources:
             - logs:CreateLogGroup
             - logs:CreateLogStream
             - logs:PutLogEvents
-            - lambda:InvokeAsync
+            Resource: '*'
+          - Effect: Allow
+            Action:
             - lambda:InvokeFunction
-            - lambda:InvokeFunction
-            - lambda:CreateFunction
-            - lambda:DeleteFunction
-            - lambda:GetFunction
             - lambda:ListFunctions
             - lambda:UpdateFunctionCode
-            - lambda:GetFunctionConfiguration
-            - lambda:UpdateFunctionConfiguration
-            Resource:
-            - Fn::Sub: arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*
+            Resource: '*'
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
