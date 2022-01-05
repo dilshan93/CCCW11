@@ -7,10 +7,6 @@ exports.modelSearchService = async (event) => {
 	return getCarModel(event);
   }
 
-exports.priceRetrievalService = async function (event){
-	return getCarPrice(event);
-}
-
 
 exports.optionsRetrievalService = async function(event){
 	return getCarOptions(event);
