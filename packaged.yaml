@@ -1,19 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Parameters:
-  InputApplicationTagName:
-    Description: Tag used for the resources.
-    Type: String
-  InputUserPoolName:
-    Description: Name of UserPool resource.
-    Type: String
-  InputRefreshTokenValidity:
-    Description: The time limit, in days, after which the refresh token is no longer
-      valid and cannot be used.
-    Type: String
-  InputClientName:
-    Description: The client name for the user pool client.
-    Type: String
   carTableName:
     Type: String
     Default: car
@@ -52,7 +39,7 @@ Resources:
     Properties:
       Handler: handler.modelSearchService
       Runtime: nodejs14.x
-      CodeUri: s3://ccwbucketiit/5caa406ba1758a6397c585ed0e9c6ed4
+      CodeUri: s3://ccwbucketiit/7df329e6c86e28ddbcf28d3474e3d7e3
       Policies:
       - DynamoDBCrudPolicy:
           TableName:
@@ -75,7 +62,7 @@ Resources:
     Properties:
       Handler: handler.priceRetrievalService
       Runtime: nodejs14.x
-      CodeUri: s3://ccwbucketiit/5caa406ba1758a6397c585ed0e9c6ed4
+      CodeUri: s3://ccwbucketiit/7df329e6c86e28ddbcf28d3474e3d7e3
       Policies:
       - DynamoDBCrudPolicy:
           TableName:
@@ -98,7 +85,7 @@ Resources:
     Properties:
       Handler: handler.optionsRetrievalService
       Runtime: nodejs14.x
-      CodeUri: s3://ccwbucketiit/5caa406ba1758a6397c585ed0e9c6ed4
+      CodeUri: s3://ccwbucketiit/7df329e6c86e28ddbcf28d3474e3d7e3
       Policies:
       - DynamoDBCrudPolicy:
           TableName:
@@ -191,6 +178,19 @@ Resources:
             - ec2:DescribeInstances
             - ec2:AttachNetworkInterface
             Resource: '*'
+          - Effect: Allow
+            Action:
+            - lambda:InvokeAsync
+            - lambda:InvokeFunction
+            - lambda:InvokeFunction
+            - lambda:CreateFunction
+            - lambda:DeleteFunction
+            - lambda:GetFunction
+            - lambda:ListFunctions
+            - lambda:UpdateFunctionCode
+            - lambda:GetFunctionConfiguration
+            - lambda:UpdateFunctionConfiguration
+            Resource: '*'
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -216,6 +216,16 @@ Resources:
             - logs:CreateLogGroup
             - logs:CreateLogStream
             - logs:PutLogEvents
+            - lambda:InvokeAsync
+            - lambda:InvokeFunction
+            - lambda:InvokeFunction
+            - lambda:CreateFunction
+            - lambda:DeleteFunction
+            - lambda:GetFunction
+            - lambda:ListFunctions
+            - lambda:UpdateFunctionCode
+            - lambda:GetFunctionConfiguration
+            - lambda:UpdateFunctionConfiguration
             Resource:
             - Fn::Sub: arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*
   CodeBuildProject:
@@ -237,7 +247,7 @@ Resources:
         Type: GITHUB
         Auth:
           Type: OAUTH
-          Resource: gittoken123456789
+          Resource: git token
       SourceVersion: master
       Triggers:
         Webhook: true
@@ -249,86 +259,7 @@ Resources:
             Pattern: refs/heads/master
             ExcludeMatchedPattern: false
       TimeoutInMinutes: 10
-  UserPoolResource:
-    Type: AWS::Cognito::UserPool
-    Properties:
-      UserPoolName:
-        Ref: InputUserPoolName
-      UserPoolTags:
-        application:
-          Ref: InputApplicationTagName
-  UserPoolClientResource:
-    Type: AWS::Cognito::UserPoolClient
-    Properties:
-      AllowedOAuthFlows:
-        - client_credentials
-      GenerateSecret: 'true'
-      ClientName:
-        Ref: InputClientName
-      PreventUserExistenceErrors: ENABLED
-      RefreshTokenValidity:
-        Ref: InputRefreshTokenValidity
-      SupportedIdentityProviders:
-        - COGNITO
-      AllowedOAuthScopes:
-        - Fn::Join:
-            - "/"
-            - - Ref: InputUserPoolName
-              - read_operation
-        - Fn::Join:
-            - "/"
-            - - Ref: InputUserPoolName
-              - create_operation
-        - Fn::Join:
-            - "/"
-            - - Ref: InputUserPoolName
-              - delete_operation
-      UserPoolId:
-        Ref: UserPoolResource
-    DependsOn:
-      - UserPoolResourceServerResource
-  UserPoolResourceServerResource:
-    Type: AWS::Cognito::UserPoolResourceServer
-    Properties:
-      UserPoolId:
-        Ref: UserPoolResource
-      Identifier:
-        Ref: InputUserPoolName
-      Name:
-        Ref: InputUserPoolName
-      Scopes:
-        - ScopeName: read_operation
-          ScopeDescription: read operation
-        - ScopeName: create_operation
-          ScopeDescription: create operation
-        - ScopeName: delete_operation
-          ScopeDescription: delete operation
-  UserPoolDomainResource:
-    Type: AWS::Cognito::UserPoolDomain
-    Properties:
-      Domain:
-        Ref: InputUserPoolName
-      UserPoolId:
-        Ref: UserPoolResource
 Outputs:
-  UserPoolARN:
-    Value:
-      Fn::GetAtt:
-        - UserPoolResource
-        - Arn
-  UserPoolProviderURL:
-    Value:
-      Fn::GetAtt:
-        - UserPoolResource
-        - ProviderURL
-  UserPoolProviderName:
-    Value:
-      Fn::GetAtt:
-        - UserPoolResource
-        - ProviderName
-  UserPoolID:
-    Value:
-      Ref: UserPoolResource
   Region:
     Description: Region
     Value:
