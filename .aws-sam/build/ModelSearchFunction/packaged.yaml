@@ -38,7 +38,7 @@ Resources:
         Fn::GetAtt:
         - IAMRole
         - Arn
-      CodeUri: s3://ccwbucketiit/361eb8596700c1a476044eb267ac3997
+      CodeUri: s3://ccwbucketiit/5c096c720461f8a3eefaf200b01b0c82
       Policies:
       - DynamoDBCrudPolicy:
           TableName:
@@ -146,7 +146,6 @@ Resources:
             - codebuild.amazonaws.com
           Action:
           - sts:AssumeRole
-      Path: /service-role/
       Policies:
       - PolicyName: CodeBuildAccessPolicies
         PolicyDocument:
@@ -157,18 +156,13 @@ Resources:
             - logs:CreateLogGroup
             - logs:CreateLogStream
             - logs:PutLogEvents
-            - lambda:InvokeAsync
+            Resource: '*'
+          - Effect: Allow
+            Action:
             - lambda:InvokeFunction
-            - lambda:InvokeFunction
-            - lambda:CreateFunction
-            - lambda:DeleteFunction
-            - lambda:GetFunction
             - lambda:ListFunctions
             - lambda:UpdateFunctionCode
-            - lambda:GetFunctionConfiguration
-            - lambda:UpdateFunctionConfiguration
-            Resource:
-            - Fn::Sub: arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*
+            Resource: '*'
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:

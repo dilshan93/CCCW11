@@ -33,7 +33,6 @@ exports.modelSearchService = async (event) => {
 // 		console.log(response);
 // 		return sendResponse(200, JSON.stringify(response.price));
 // 	});
-// }
 
 function getCarModel(event) {
 	const modelName = event.pathParameters.modelName;

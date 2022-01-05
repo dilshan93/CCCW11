@@ -182,7 +182,7 @@ Resources:
         Type: GITHUB
         Auth:
           Type: OAUTH
-          Resource: b04776caf65d2cb55a24365b07a6e0260f514d37
+          Resource: 123
       SourceVersion: master
       Triggers:
         Webhook: true

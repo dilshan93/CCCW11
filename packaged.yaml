@@ -38,7 +38,7 @@ Resources:
         Fn::GetAtt:
         - IAMRole
         - Arn
-      CodeUri: s3://ccwbucketiit/5c096c720461f8a3eefaf200b01b0c82
+      CodeUri: s3://ccwbucketiit/2400f777e0e0fe798c5d0ce9a4359d5a
       Policies:
       - DynamoDBCrudPolicy:
           TableName:
@@ -182,7 +182,7 @@ Resources:
         Type: GITHUB
         Auth:
           Type: OAUTH
-          Resource: b04776caf65d2cb55a24365b07a6e0260f514d37
+          Resource: 123
       SourceVersion: master
       Triggers:
         Webhook: true
